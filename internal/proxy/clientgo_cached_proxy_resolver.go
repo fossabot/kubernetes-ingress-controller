@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/blang/semver/v4"
-	"github.com/bombsimon/logrusr"
+	"github.com/bombsimon/logrusr/v2"
 	"github.com/go-logr/logr"
 	"github.com/kong/go-kong/kong"
 	"github.com/sirupsen/logrus"
@@ -67,7 +67,7 @@ func NewCacheBasedProxyWithStagger(ctx context.Context,
 		enableReverseSync: enableReverseSync,
 
 		deprecatedLogger: logger,
-		logger:           logrusr.NewLogger(logger),
+		logger:           logrusr.New(logger),
 
 		ingressClassName: ingressClassName,
 		stopCh:           make(chan struct{}),
