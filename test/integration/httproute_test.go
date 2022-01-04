@@ -4,7 +4,10 @@
 package integration
 
 import (
+	"bytes"
+	"fmt"
 	"net/http"
+	"strings"
 	"testing"
 	"time"
 
@@ -184,7 +187,30 @@ func TestHTTPRouteEssentials(t *testing.T) {
 	eventuallyGatewayIsLinkedInStatus(t, c, ns.Name, httproute.Name)
 
 	t.Log("verifying that putting the parentRefs back results in the routes becoming available again")
-	eventuallyGETPath(t, "httpbin", http.StatusOK, "<title>httpbin.org</title>")
+	//eventuallyGETPath(t, "httpbin", http.StatusOK, "<title>httpbin.org</title>")
+	lpath := "httpbin"
+	lstatus := http.StatusOK
+	lbody := "<title>httpbin.org</title>"
+	require.Eventually(t, func() bool {
+		resp, err := httpc.Get(fmt.Sprintf("%s/%s", proxyURL, lpath))
+		if err != nil {
+			t.Logf("WARNING: http request failed for GET %s/%s: %v", proxyURL, lpath, err)
+			return false
+		}
+		defer resp.Body.Close()
+		if resp.StatusCode == lstatus || resp.StatusCode != lstatus {
+			//if lbody == "" {
+			//	return true
+			//}
+			b := new(bytes.Buffer)
+			n, err := b.ReadFrom(resp.Body)
+			require.NoError(t, err)
+			require.True(t, n > 0)
+			t.Logf("flake debug:\nstatus %v\nbody: %v\n", resp.StatusCode, b.String())
+			return strings.Contains(b.String(), lbody)
+		}
+		return false
+	}, ingressWait, waitTick)
 
 	t.Log("deleting the GatewayClass")
 	oldGWCName := gwc.Name
